@@ -1,0 +1,29 @@
+{
+  "Comment": "Build point-in-time churn training or scoring features",
+  "QueryLanguage": "JSONata",
+  "StartAt": "Glue-Churn-Features",
+  "States": {
+    "Glue-Churn-Features": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "glue_features_churn_bookstore",
+        "Arguments": {
+          "--dataset_mode": "{% $states.input.dataset_mode %}",
+          "--cutoff_timestamp": "{% $states.input.cutoff_timestamp %}",
+          "--data_as_of_timestamp": "{% $states.input.data_as_of_timestamp %}",
+          "--run_id": "{% $states.context.Execution.Name %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["Glue.ConcurrentRunsExceededException"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 10,
+          "BackoffRate": 1.5
+        }
+      ],
+      "End": true
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "Comment": "BookStore Raw-to-Curated processing with sequential Glue jobs",
+  "QueryLanguage": "JSONata",
+  "StartAt": "Glue-Curated-Transactional",
+  "States": {
+    "Glue-Curated-Transactional": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "glue_curated_transactional_bookstore",
+        "Arguments": {
+          "--run_id": "{% $states.context.Execution.Name %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 10,
+          "BackoffRate": 1.5
+        }
+      ],
+      "Next": "Glue-Curated-Behavioral"
+    },
+    "Glue-Curated-Behavioral": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Arguments": {
+        "JobName": "glue_curated_behavioral_bookstore",
+        "Arguments": {
+          "--run_id": "{% $states.context.Execution.Name %}"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Glue.ConcurrentRunsExceededException"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 10,
+          "BackoffRate": 1.5
+        }
+      ],
+      "End": true
+    }
+  }
+}
